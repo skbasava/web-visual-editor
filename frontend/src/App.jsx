@@ -42,9 +42,13 @@ function App() {
   const [reactFlowNodes, setReactFlowNodes, onNodesChange] = useNodesState(nodes);
   const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState(edges);
 
-  // Sync store nodes/edges with React Flow
+  // Sync store nodes/edges with React Flow, ensuring draggable property is set
   useEffect(() => {
-    setReactFlowNodes(nodes);
+    const draggableNodes = nodes.map(node => ({
+      ...node,
+      draggable: true,  // Ensure all nodes are draggable
+    }));
+    setReactFlowNodes(draggableNodes);
   }, [nodes, setReactFlowNodes]);
 
   useEffect(() => {
@@ -233,9 +237,16 @@ function App() {
    */
   const onNodeDragStop = useCallback(
     (event, node) => {
-      updateNode(node.id, { position: node.position });
+      // Update position in the store to persist the change
+      setNodes(
+        reactFlowNodes.map((n) =>
+          n.id === node.id
+            ? { ...n, position: node.position, draggable: true }
+            : n
+        )
+      );
     },
-    [updateNode]
+    [reactFlowNodes, setNodes]
   );
 
   return (

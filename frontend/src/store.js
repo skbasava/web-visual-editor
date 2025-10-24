@@ -51,7 +51,11 @@ const useStore = create((set, get) => ({
 
   updateNode: (nodeId, data) => set((state) => ({
     nodes: state.nodes.map((node) =>
-      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+      node.id === nodeId ? {
+        ...node,
+        draggable: true,  // Ensure draggable is always preserved
+        data: { ...node.data, ...data }
+      } : node
     ),
   })),
 
