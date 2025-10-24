@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import { API_URL } from './config';
 
 const useStore = create((set, get) => ({
   // WebSocket connection
@@ -111,7 +112,7 @@ const useStore = create((set, get) => ({
    */
   createComponent: async (componentData) => {
     try {
-      const response = await fetch('http://localhost:8000/api/components', {
+      const response = await fetch(`${API_URL}/components`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(componentData),
@@ -131,7 +132,7 @@ const useStore = create((set, get) => ({
 
   updateComponent: async (componentId, properties) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/components/${componentId}`, {
+      const response = await fetch(`${API_URL}/components/${componentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(properties),
@@ -151,7 +152,7 @@ const useStore = create((set, get) => ({
 
   deleteComponent: async (componentId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/components/${componentId}`, {
+      const response = await fetch(`${API_URL}/components/${componentId}`, {
         method: 'DELETE',
       });
       const result = await response.json();
@@ -170,7 +171,7 @@ const useStore = create((set, get) => ({
 
   createConnection: async (connectionData) => {
     try {
-      const response = await fetch('http://localhost:8000/api/connections', {
+      const response = await fetch(`${API_URL}/connections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(connectionData),
@@ -190,7 +191,7 @@ const useStore = create((set, get) => ({
 
   startSimulation: async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/start', {
+      const response = await fetch(`${API_URL}/simulation/start`, {
         method: 'POST',
       });
       const result = await response.json();
@@ -209,7 +210,7 @@ const useStore = create((set, get) => ({
 
   stopSimulation: async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/stop', {
+      const response = await fetch(`${API_URL}/simulation/stop`, {
         method: 'POST',
       });
       const result = await response.json();
@@ -228,7 +229,7 @@ const useStore = create((set, get) => ({
 
   resetSimulation: async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/reset', {
+      const response = await fetch(`${API_URL}/simulation/reset`, {
         method: 'POST',
       });
       const result = await response.json();

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import useStore from '../store';
+import { API_URL } from '../config';
 
 const Toolbar = () => {
   const {
@@ -124,7 +125,7 @@ const Toolbar = () => {
    */
   const runHelloWorldDemo = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/hello-world', {
+      const response = await fetch(`${API_URL}/simulation/hello-world`, {
         method: 'POST',
       });
       const result = await response.json();
@@ -145,7 +146,7 @@ const Toolbar = () => {
    */
   const runDDRConfigDemo = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/simulation/configure-ddr', {
+      const response = await fetch(`${API_URL}/simulation/configure-ddr`, {
         method: 'POST',
       });
       const result = await response.json();

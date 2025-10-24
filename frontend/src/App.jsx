@@ -19,8 +19,7 @@ import { nodeTypes } from './components/CustomNodes';
 import Toolbar from './components/Toolbar';
 import PropertiesPanel from './components/PropertiesPanel';
 import LogsPanel from './components/LogsPanel';
-
-const BACKEND_WS_URL = 'ws://localhost:8000/ws';
+import { WS_URL } from './config';
 
 function App() {
   const {
@@ -61,7 +60,7 @@ function App() {
 
     const connect = () => {
       console.log('🔌 Connecting to backend WebSocket...');
-      ws = new WebSocket(BACKEND_WS_URL);
+      ws = new WebSocket(WS_URL);
 
       ws.onopen = () => {
         console.log('✅ WebSocket connected');
