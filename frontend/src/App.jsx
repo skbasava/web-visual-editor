@@ -273,11 +273,17 @@ function App() {
             nodesDraggable={true}
             nodesConnectable={true}
             elementsSelectable={true}
+            connectOnClick={true}
+            snapToGrid={true}
+            snapGrid={[15, 15]}
+            connectionLineType="smoothstep"
+            connectionLineStyle={{ stroke: '#4ade80', strokeWidth: 2 }}
             fitView
             attributionPosition="bottom-left"
             defaultEdgeOptions={{
               type: 'smoothstep',
               animated: true,
+              style: { stroke: '#4ade80', strokeWidth: 2 },
             }}
           >
             <Background color="#0f3460" gap={16} />
