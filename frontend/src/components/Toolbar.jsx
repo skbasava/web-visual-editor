@@ -119,6 +119,27 @@ const Toolbar = () => {
     });
   };
 
+  /**
+   * Trigger Hello World demo: ARM → NoC → DDR
+   */
+  const runHelloWorldDemo = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/simulation/hello-world', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        console.log('Hello World demo started:', result);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error running Hello World demo:', error);
+      alert('Failed to run Hello World demo. Make sure components are connected!');
+    }
+  };
+
   return (
     <div className="panel p-4 mb-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -189,6 +210,23 @@ const Toolbar = () => {
             <span>Reset</span>
           </button>
         </div>
+      </div>
+
+      {/* Demo Section */}
+      <div className="mt-3 flex items-center gap-2 p-2 bg-soc-accent bg-opacity-30 rounded border border-soc-secondary">
+        <span className="font-semibold text-sm text-gray-300">Demo:</span>
+        <button
+          onClick={runHelloWorldDemo}
+          className="btn btn-primary text-sm flex items-center gap-2"
+          disabled={!isConnected || !isSimulationRunning}
+          title="ARM writes 'Hello World' through NoC to DDR memory"
+        >
+          <span>👋</span>
+          <span>Hello World Demo</span>
+        </button>
+        <span className="text-xs text-gray-400 italic">
+          (ARM → NoC → DDR: Write "Hello World" to memory at 0x80001000)
+        </span>
       </div>
 
       {!isConnected && (

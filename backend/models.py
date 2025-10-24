@@ -151,3 +151,28 @@ class WebSocketMessage(BaseModel):
     """Generic WebSocket message structure."""
     type: str  # log, state_update, simulation_event, etc.
     payload: Dict[str, Any]
+
+
+class TransactionType(str, Enum):
+    """Types of transactions in the SoC."""
+    READ = "read"
+    WRITE = "write"
+    INVALIDATE = "invalidate"
+
+
+class Transaction(BaseModel):
+    """Represents a transaction/packet traveling through the SoC."""
+    id: str
+    type: TransactionType
+    source_id: str
+    destination_id: str
+    address: int  # Memory address
+    data: Optional[bytes] = None  # Actual data payload
+    data_str: Optional[str] = None  # String representation for display
+    size: int  # Size in bytes
+    timestamp_created: int  # When transaction was created (ns)
+    timestamp_completed: Optional[int] = None  # When completed (ns)
+    route: List[str] = Field(default_factory=list)  # Path through NoC
+
+    class Config:
+        arbitrary_types_allowed = True

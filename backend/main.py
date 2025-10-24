@@ -260,6 +260,83 @@ async def reset_simulation():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/simulation/hello-world")
+async def hello_world_demo():
+    """
+    Execute Hello World demo: ARM writes to DDR via NoC.
+    This demonstrates a complete data flow through the SoC.
+    """
+    try:
+        # Find components
+        arm_id = None
+        ddr_id = None
+        noc_id = None
+
+        for comp_id, comp_sim in simulator.components.items():
+            if comp_sim.component.type == ComponentType.ARM:
+                arm_id = comp_id
+            elif comp_sim.component.type == ComponentType.DDR:
+                ddr_id = comp_id
+            elif comp_sim.component.type == ComponentType.NOC:
+                noc_id = comp_id
+
+        if not arm_id or not ddr_id:
+            return {
+                "status": "error",
+                "message": "❌ Need at least one ARM and one DDR component"
+            }
+
+        # Check if connected
+        route = simulator.find_route(arm_id, ddr_id)
+        if not route:
+            return {
+                "status": "error",
+                "message": f"❌ No connection between {arm_id} and {ddr_id}. Connect them via NoC!"
+            }
+
+        # Create the transaction
+        address = 0x80001000  # DDR address
+        message = "Hello World"
+
+        transaction = await simulator.create_transaction(
+            source_id=arm_id,
+            dest_id=ddr_id,
+            address=address,
+            data_str=message
+        )
+
+        if transaction:
+            # Broadcast to all clients
+            await manager.broadcast({
+                "type": "hello_world_started",
+                "payload": {
+                    "transaction_id": transaction.id,
+                    "route": transaction.route,
+                    "message": message,
+                    "address": hex(address)
+                },
+            })
+
+            return {
+                "status": "success",
+                "message": f"✅ Hello World transaction created: {arm_id} → {' → '.join(route[1:])}",
+                "transaction": {
+                    "id": transaction.id,
+                    "route": transaction.route,
+                    "data": message,
+                    "address": hex(address)
+                }
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to create transaction"
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # WebSocket Endpoint
 # ============================================================================

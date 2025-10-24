@@ -19,6 +19,8 @@ from models import (
     SimulationEvent,
     LogMessage,
     Connection,
+    Transaction,
+    TransactionType,
 )
 
 
@@ -191,6 +193,27 @@ class DDRSimulator(ComponentSimulator):
 
         return events
 
+    async def receive_transaction(self, transaction: Transaction):
+        """Receive and store a transaction in memory."""
+        # Store data in memory map
+        self.memory_map[transaction.address] = {
+            "data": transaction.data_str,
+            "size": transaction.size,
+            "timestamp": transaction.timestamp_completed,
+            "source": transaction.source_id
+        }
+
+        self.bytes_written += transaction.size
+        self.metrics["operations_count"] += 1
+
+        self._log("info", self.component.id,
+                 f"💾 Stored '{transaction.data_str}' at address 0x{transaction.address:08X} ({transaction.size} bytes)")
+
+    def _log(self, level: str, component: str, message: str):
+        """Internal logging (will be passed through simulator)."""
+        # This will be called by the transaction system
+        pass
+
 
 class NoCSimulator(ComponentSimulator):
     """Simulates Network-on-Chip behavior."""
@@ -275,6 +298,8 @@ class SoCSimulator:
         self.event_callback: Optional[Callable] = None
         self.log_callback: Optional[Callable] = None
         self.time_step_ns = 1_000_000  # 1ms per step
+        self.transaction_queue: List[Transaction] = []  # Pending transactions
+        self.active_transactions: List[Transaction] = []  # In-progress transactions
 
     def add_component(self, component: ComponentProperties):
         """Add a component to the simulation."""
@@ -351,6 +376,9 @@ class SoCSimulator:
         """Execute one simulation step for all components."""
         all_events = []
 
+        # Process transactions first
+        await self.process_transactions()
+
         # Simulate each component
         for component_id, simulator in self.components.items():
             events = await simulator.simulate_step(self.time_step_ns)
@@ -382,6 +410,91 @@ class SoCSimulator:
         )
         if self.log_callback:
             asyncio.create_task(self.log_callback(log_msg))
+
+    def find_route(self, source_id: str, dest_id: str) -> List[str]:
+        """Find route from source to destination through NoC."""
+        # Find if there's a direct connection
+        for conn in self.connections:
+            if conn.source == source_id and conn.target == dest_id:
+                return [source_id, dest_id]
+
+        # Find route through NoC
+        for conn in self.connections:
+            if conn.source == source_id:
+                intermediate = conn.target
+                if self.components.get(intermediate) and self.components[intermediate].component.type == ComponentType.NOC:
+                    # Check if NoC connects to destination
+                    for conn2 in self.connections:
+                        if conn2.source == intermediate and conn2.target == dest_id:
+                            return [source_id, intermediate, dest_id]
+
+        # No route found
+        return []
+
+    async def create_transaction(self, source_id: str, dest_id: str, address: int,
+                                 data_str: str, trans_type: TransactionType = TransactionType.WRITE):
+        """Create a new transaction (e.g., Hello World write from ARM to DDR)."""
+        trans_id = f"trans-{int(time.time() * 1000)}"
+        data_bytes = data_str.encode('utf-8')
+
+        route = self.find_route(source_id, dest_id)
+
+        if not route:
+            self._log("error", "Simulator", f"❌ No route found from {source_id} to {dest_id}")
+            return None
+
+        transaction = Transaction(
+            id=trans_id,
+            type=trans_type,
+            source_id=source_id,
+            destination_id=dest_id,
+            address=address,
+            data=data_bytes,
+            data_str=data_str,
+            size=len(data_bytes),
+            timestamp_created=self.simulation_time_ns,
+            route=route
+        )
+
+        self.transaction_queue.append(transaction)
+        self._log("info", source_id,
+                 f"📝 Created {trans_type.value} transaction: '{data_str}' → 0x{address:08X} (via {' → '.join(route)})")
+
+        return transaction
+
+    async def process_transactions(self):
+        """Process pending transactions through the NoC."""
+        completed = []
+
+        for transaction in self.active_transactions:
+            # Simulate routing delay (already spent time in NoC)
+            time_elapsed = self.simulation_time_ns - transaction.timestamp_created
+
+            # If enough time has passed, deliver to destination
+            if time_elapsed > 1_000_000:  # 1ms routing time
+                dest_simulator = self.components.get(transaction.destination_id)
+                if dest_simulator and hasattr(dest_simulator, 'receive_transaction'):
+                    await dest_simulator.receive_transaction(transaction)
+                    transaction.timestamp_completed = self.simulation_time_ns
+                    completed.append(transaction)
+
+                    self._log("info", transaction.destination_id,
+                             f"✅ Received transaction: '{transaction.data_str}' at 0x{transaction.address:08X}")
+
+        # Remove completed transactions
+        for trans in completed:
+            self.active_transactions.remove(trans)
+
+        # Move transactions from queue to active (through NoC)
+        while self.transaction_queue:
+            transaction = self.transaction_queue.pop(0)
+            self.active_transactions.append(transaction)
+
+            # Log NoC routing
+            if len(transaction.route) > 2:
+                noc_id = transaction.route[1]
+                self._log("info", noc_id,
+                         f"🔀 Routing transaction from {transaction.source_id} to {transaction.destination_id} ({transaction.size} bytes)")
 
     def get_state(self) -> Dict:
         """Get current simulation state."""
