@@ -260,6 +260,9 @@ function App() {
             onPaneClick={onPaneClick}
             onNodeDragStop={onNodeDragStop}
             nodeTypes={nodeTypes}
+            nodesDraggable={true}
+            nodesConnectable={true}
+            elementsSelectable={true}
             fitView
             attributionPosition="bottom-left"
             defaultEdgeOptions={{

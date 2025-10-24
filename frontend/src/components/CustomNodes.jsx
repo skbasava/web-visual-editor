@@ -17,29 +17,62 @@ export const ARMNode = memo(({ data, selected }) => {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       borderColor: '#764ba2',
     }}>
+      {/* Handles for connections - each side can both send and receive */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="top-source"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
       <Handle
         type="target"
         position={Position.Top}
-        id="top"
+        id="top-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom"
+        id="bottom-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="bottom-target"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left-source"
+        className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="target"
         position={Position.Left}
-        id="left"
+        id="left-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Right}
-        id="right"
+        id="right-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="right-target"
+        className="w-3 h-3"
+        isConnectable={true}
       />
 
       <div className="flex items-center mb-2">
@@ -93,29 +126,62 @@ export const DDRNode = memo(({ data, selected }) => {
       background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       borderColor: '#f5576c',
     }}>
+      {/* Handles for connections - each side can both send and receive */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="top-source"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
       <Handle
         type="target"
         position={Position.Top}
-        id="top"
+        id="top-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom"
+        id="bottom-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="bottom-target"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left-source"
+        className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="target"
         position={Position.Left}
-        id="left"
+        id="left-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Right}
-        id="right"
+        id="right-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="right-target"
+        className="w-3 h-3"
+        isConnectable={true}
       />
 
       <div className="flex items-center mb-2">
@@ -170,29 +236,62 @@ export const NoCNode = memo(({ data, selected }) => {
       background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       borderColor: '#00f2fe',
     }}>
+      {/* Handles for connections - each side can both send and receive */}
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="top-source"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
       <Handle
         type="target"
         position={Position.Top}
-        id="top"
+        id="top-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        id="bottom"
+        id="bottom-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="bottom-target"
+        className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left-source"
+        className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="target"
         position={Position.Left}
-        id="left"
+        id="left-target"
         className="w-3 h-3"
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Right}
-        id="right"
+        id="right-source"
         className="w-3 h-3"
+        isConnectable={true}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="right-target"
+        className="w-3 h-3"
+        isConnectable={true}
       />
 
       <div className="flex items-center mb-2">

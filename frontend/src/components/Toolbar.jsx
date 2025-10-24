@@ -23,11 +23,15 @@ const Toolbar = () => {
    */
   const addARMComponent = async () => {
     const id = `arm-${Date.now()}`;
+    const armCount = nodes.filter(n => n.type === 'arm').length;
     const componentData = {
       id,
       type: 'arm',
-      label: `ARM CPU ${nodes.filter(n => n.type === 'arm').length + 1}`,
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      label: `ARM CPU ${armCount + 1}`,
+      position: {
+        x: 100 + (armCount * 300),
+        y: 100
+      },
       base_address: '0x00000000',
       clock_speed_mhz: 1000,
       cores: 4,
@@ -44,6 +48,7 @@ const Toolbar = () => {
       type: 'arm',
       position: componentData.position,
       data: componentData,
+      draggable: true,
     });
   };
 
@@ -52,11 +57,15 @@ const Toolbar = () => {
    */
   const addDDRComponent = async () => {
     const id = `ddr-${Date.now()}`;
+    const ddrCount = nodes.filter(n => n.type === 'ddr').length;
     const componentData = {
       id,
       type: 'ddr',
-      label: `DDR Memory ${nodes.filter(n => n.type === 'ddr').length + 1}`,
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      label: `DDR Memory ${ddrCount + 1}`,
+      position: {
+        x: 100 + (ddrCount * 300),
+        y: 300
+      },
       base_address: '0x80000000',
       size_mb: 4096,
       speed_mhz: 2400,
@@ -73,6 +82,7 @@ const Toolbar = () => {
       type: 'ddr',
       position: componentData.position,
       data: componentData,
+      draggable: true,
     });
   };
 
@@ -81,11 +91,15 @@ const Toolbar = () => {
    */
   const addNoCComponent = async () => {
     const id = `noc-${Date.now()}`;
+    const nocCount = nodes.filter(n => n.type === 'noc').length;
     const componentData = {
       id,
       type: 'noc',
-      label: `NoC Bus ${nodes.filter(n => n.type === 'noc').length + 1}`,
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      label: `NoC Bus ${nocCount + 1}`,
+      position: {
+        x: 100 + (nocCount * 300),
+        y: 500
+      },
       bandwidth_gbps: 100.0,
       latency_ns: 10,
       topology: 'mesh',
@@ -101,6 +115,7 @@ const Toolbar = () => {
       type: 'noc',
       position: componentData.position,
       data: componentData,
+      draggable: true,
     });
   };
 
