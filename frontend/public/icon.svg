@@ -1,0 +1,24 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#1a1a2e" rx="16"/>
+
+  <!-- Chip outline -->
+  <rect x="24" y="24" width="80" height="80" fill="#16213e" stroke="#00adb5" stroke-width="2" rx="4"/>
+
+  <!-- CPU representation (grid pattern) -->
+  <rect x="36" y="36" width="20" height="20" fill="#667eea" rx="2"/>
+  <rect x="60" y="36" width="20" height="20" fill="#667eea" rx="2"/>
+  <rect x="36" y="60" width="20" height="20" fill="#667eea" rx="2"/>
+  <rect x="60" y="60" width="20" height="20" fill="#667eea" rx="2"/>
+
+  <!-- Memory representation (bars) -->
+  <rect x="88" y="36" width="12" height="56" fill="#f093fb" rx="2"/>
+
+  <!-- Interconnect lines -->
+  <line x1="84" y1="46" x2="88" y2="46" stroke="#00adb5" stroke-width="2"/>
+  <line x1="84" y1="56" x2="88" y2="56" stroke="#00adb5" stroke-width="2"/>
+  <line x1="84" y1="66" x2="88" y2="66" stroke="#00adb5" stroke-width="2"/>
+
+  <!-- Title -->
+  <text x="64" y="118" font-family="Arial, sans-serif" font-size="12" fill="#00adb5" text-anchor="middle" font-weight="bold">SoC</text>
+</svg>
