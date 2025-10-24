@@ -140,6 +140,27 @@ const Toolbar = () => {
     }
   };
 
+  /**
+   * Trigger DDR Configuration demo: ARM configures DDR registers via NoC
+   */
+  const runDDRConfigDemo = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/simulation/configure-ddr', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        console.log('DDR Configuration demo started:', result);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error running DDR Configuration demo:', error);
+      alert('Failed to run DDR config demo. Make sure components are connected!');
+    }
+  };
+
   return (
     <div className="panel p-4 mb-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -213,20 +234,42 @@ const Toolbar = () => {
       </div>
 
       {/* Demo Section */}
-      <div className="mt-3 flex items-center gap-2 p-2 bg-soc-accent bg-opacity-30 rounded border border-soc-secondary">
-        <span className="font-semibold text-sm text-gray-300">Demo:</span>
-        <button
-          onClick={runHelloWorldDemo}
-          className="btn btn-primary text-sm flex items-center gap-2"
-          disabled={!isConnected || !isSimulationRunning}
-          title="ARM writes 'Hello World' through NoC to DDR memory"
-        >
-          <span>👋</span>
-          <span>Hello World Demo</span>
-        </button>
-        <span className="text-xs text-gray-400 italic">
-          (ARM → NoC → DDR: Write "Hello World" to memory at 0x80001000)
-        </span>
+      <div className="mt-3 p-3 bg-soc-accent bg-opacity-30 rounded border border-soc-secondary">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-semibold text-sm text-gray-300">Demos:</span>
+        </div>
+
+        {/* Demo 1: Hello World */}
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={runHelloWorldDemo}
+            className="btn btn-primary text-sm flex items-center gap-2"
+            disabled={!isConnected || !isSimulationRunning}
+            title="ARM writes 'Hello World' through NoC to DDR memory"
+          >
+            <span>👋</span>
+            <span>Hello World</span>
+          </button>
+          <span className="text-xs text-gray-400 italic">
+            Write "Hello World" string to DDR memory
+          </span>
+        </div>
+
+        {/* Demo 2: DDR Configuration */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={runDDRConfigDemo}
+            className="btn btn-primary text-sm flex items-center gap-2"
+            disabled={!isConnected || !isSimulationRunning}
+            title="ARM configures DDR controller registers: Enable clock, set frequency, enable controller"
+          >
+            <span>⚙️</span>
+            <span>DDR Config</span>
+          </button>
+          <span className="text-xs text-gray-400 italic">
+            Configure DDR controller registers (Clock, Frequency, Enable)
+          </span>
+        </div>
       </div>
 
       {!isConnected && (

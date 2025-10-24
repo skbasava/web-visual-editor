@@ -21,6 +21,8 @@ from models import (
     Connection,
     Transaction,
     TransactionType,
+    DDRRegisterMap,
+    DDRRegisters,
 )
 
 
@@ -120,6 +122,14 @@ class DDRSimulator(ComponentSimulator):
         self.bytes_written = 0
         self.memory_map = {}  # Simplified memory representation
 
+        # DDR Controller Registers
+        self.register_map = DDRRegisterMap()
+        self.registers = DDRRegisters()
+
+        # Initialize with default state
+        self.registers.freq = component.speed_mhz  # Match component speed
+        self.registers.mode = 0x00000001  # DDR4 mode
+
     async def simulate_step(self, delta_time_ns: int) -> List[SimulationEvent]:
         """Simulate DDR memory operations for one time step."""
         events = []
@@ -194,20 +204,160 @@ class DDRSimulator(ComponentSimulator):
         return events
 
     async def receive_transaction(self, transaction: Transaction):
-        """Receive and store a transaction in memory."""
-        # Store data in memory map
-        self.memory_map[transaction.address] = {
-            "data": transaction.data_str,
-            "size": transaction.size,
-            "timestamp": transaction.timestamp_completed,
-            "source": transaction.source_id
-        }
+        """Receive and process a transaction (memory or register operation)."""
 
-        self.bytes_written += transaction.size
+        if transaction.type == TransactionType.REGISTER_WRITE:
+            # Handle register write
+            await self._write_register(transaction)
+        elif transaction.type == TransactionType.REGISTER_READ:
+            # Handle register read
+            await self._read_register(transaction)
+        else:
+            # Regular memory write
+            self.memory_map[transaction.address] = {
+                "data": transaction.data_str,
+                "size": transaction.size,
+                "timestamp": transaction.timestamp_completed,
+                "source": transaction.source_id
+            }
+
+            self.bytes_written += transaction.size
+            self.metrics["operations_count"] += 1
+
+            self._log("info", self.component.id,
+                     f"💾 Stored '{transaction.data_str}' at address 0x{transaction.address:08X} ({transaction.size} bytes)")
+
+    async def _write_register(self, transaction: Transaction):
+        """Write to a DDR controller register."""
+        reg_offset = transaction.address
+        value = transaction.data_value
+
+        # Determine which register is being written
+        if reg_offset == self.register_map.CTRL_REG:
+            self.registers.ctrl = value
+            self._log("info", self.component.id,
+                     f"⚙️  CTRL_REG = 0x{value:08X} [Reset={value&1}, Enable={(value>>1)&1}]")
+            await self._process_ctrl_register()
+
+        elif reg_offset == self.register_map.CLK_CTRL_REG:
+            self.registers.clk_ctrl = value
+            clk_en = value & 1
+            clk_div = (value >> 4) & 0xF
+            self._log("info", self.component.id,
+                     f"🕐 CLK_CTRL_REG = 0x{value:08X} [CLK_EN={clk_en}, DIV={clk_div}]")
+            await self._process_clock_config()
+
+        elif reg_offset == self.register_map.FREQ_REG:
+            self.registers.freq = value
+            self._log("info", self.component.id,
+                     f"📊 FREQ_REG = {value} MHz (requested frequency)")
+            await self._process_frequency_config()
+
+        elif reg_offset == self.register_map.MODE_REG:
+            self.registers.mode = value
+            mode_str = {0: "DDR3", 1: "DDR4", 2: "DDR5"}.get(value, "Unknown")
+            self._log("info", self.component.id,
+                     f"🎯 MODE_REG = 0x{value:08X} ({mode_str})")
+
         self.metrics["operations_count"] += 1
 
+    async def _read_register(self, transaction: Transaction):
+        """Read from a DDR controller register."""
+        reg_offset = transaction.address
+        value = 0
+
+        # Determine which register is being read
+        if reg_offset == self.register_map.STATUS_REG:
+            value = self.registers.status
+        elif reg_offset == self.register_map.CLK_STATUS_REG:
+            value = self.registers.clk_status
+        elif reg_offset == self.register_map.FREQ_STATUS_REG:
+            value = self.registers.freq_status
+        elif reg_offset == self.register_map.ERROR_REG:
+            value = self.registers.error
+
         self._log("info", self.component.id,
-                 f"💾 Stored '{transaction.data_str}' at address 0x{transaction.address:08X} ({transaction.size} bytes)")
+                 f"📖 Read {transaction.register_name or 'register'} = 0x{value:08X}")
+
+        self.metrics["operations_count"] += 1
+        return value
+
+    async def _process_ctrl_register(self):
+        """Process control register settings."""
+        enable = (self.registers.ctrl >> 1) & 1
+        reset = self.registers.ctrl & 1
+
+        if reset:
+            # Reset DDR controller
+            self.registers.status = 0x0  # Clear ready bit
+            self.registers.clk_status = 0x0
+            self._log("warning", self.component.id, "🔄 DDR Controller RESET")
+        elif enable:
+            # Enable DDR controller
+            self.registers.status |= 0x1  # Set READY bit
+            self._log("info", self.component.id, "✅ DDR Controller ENABLED - Status: READY")
+            await self._update_status_register()
+
+    async def _process_clock_config(self):
+        """Process clock control configuration."""
+        clk_en = self.registers.clk_ctrl & 1
+
+        if clk_en:
+            # Enable clock
+            self.registers.clk_status |= 0x1  # CLK_ACTIVE bit
+            self.registers.clk_status |= 0x2  # PLL_LOCKED bit
+            self.registers.status |= 0x8     # LOCKED bit in status
+            self._log("info", self.component.id,
+                     "🕐 Clock ENABLED - Status: ACTIVE & PLL LOCKED")
+        else:
+            # Disable clock
+            self.registers.clk_status &= ~0x1  # Clear CLK_ACTIVE
+            self._log("warning", self.component.id, "🕐 Clock DISABLED")
+
+        await self._update_status_register()
+
+    async def _process_frequency_config(self):
+        """Process frequency configuration."""
+        requested_freq = self.registers.freq
+
+        # Simulate frequency lock process
+        if self.registers.clk_status & 0x1:  # If clock is enabled
+            # Update actual frequency status
+            self.registers.freq_status = requested_freq
+            # Update component speed
+            self.component.speed_mhz = requested_freq
+            self._log("info", self.component.id,
+                     f"⚡ Frequency locked at {requested_freq} MHz")
+        else:
+            self._log("warning", self.component.id,
+                     f"⚠️  Cannot set frequency - clock not enabled")
+
+        await self._update_status_register()
+
+    async def _update_status_register(self):
+        """Update status register based on configuration state."""
+        # Check if fully configured and ready
+        clk_active = self.registers.clk_status & 0x1
+        enabled = (self.registers.ctrl >> 1) & 1
+
+        if clk_active and enabled and self.registers.freq_status > 0:
+            self.registers.status |= 0x1  # READY
+            self.registers.status &= ~0x2  # Not BUSY
+            self._log("info", self.component.id,
+                     f"✅ STATUS UPDATE: READY=1, CLK_ACTIVE={clk_active}, FREQ={self.registers.freq_status}MHz")
+
+    def get_register_values(self) -> dict:
+        """Get current register values for display."""
+        return {
+            "CTRL": f"0x{self.registers.ctrl:08X}",
+            "CLK_CTRL": f"0x{self.registers.clk_ctrl:08X}",
+            "FREQ": f"{self.registers.freq} MHz",
+            "MODE": f"0x{self.registers.mode:08X}",
+            "STATUS": f"0x{self.registers.status:08X}",
+            "CLK_STATUS": f"0x{self.registers.clk_status:08X}",
+            "FREQ_STATUS": f"{self.registers.freq_status} MHz",
+            "ERROR": f"0x{self.registers.error:08X}",
+        }
 
     def _log(self, level: str, component: str, message: str):
         """Internal logging (will be passed through simulator)."""
@@ -459,6 +609,38 @@ class SoCSimulator:
         self.transaction_queue.append(transaction)
         self._log("info", source_id,
                  f"📝 Created {trans_type.value} transaction: '{data_str}' → 0x{address:08X} (via {' → '.join(route)})")
+
+        return transaction
+
+    async def create_register_transaction(self, source_id: str, dest_id: str, reg_offset: int,
+                                          value: int, register_name: str, trans_type: TransactionType = TransactionType.REGISTER_WRITE):
+        """Create a register read/write transaction."""
+        trans_id = f"reg-trans-{int(time.time() * 1000)}"
+
+        route = self.find_route(source_id, dest_id)
+
+        if not route:
+            self._log("error", "Simulator", f"❌ No route found from {source_id} to {dest_id}")
+            return None
+
+        transaction = Transaction(
+            id=trans_id,
+            type=trans_type,
+            source_id=source_id,
+            destination_id=dest_id,
+            address=reg_offset,
+            data_value=value,
+            data=None,
+            data_str=None,
+            size=4,  # 32-bit register
+            timestamp_created=self.simulation_time_ns,
+            route=route,
+            register_name=register_name
+        )
+
+        self.transaction_queue.append(transaction)
+        self._log("info", source_id,
+                 f"🎛️  Created register {trans_type.value}: {register_name} = 0x{value:08X} (via {' → '.join(route)})")
 
         return transaction
 

@@ -337,6 +337,116 @@ async def hello_world_demo():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/simulation/configure-ddr")
+async def configure_ddr_demo():
+    """
+    Execute DDR configuration demo: ARM configures DDR registers via NoC.
+    This demonstrates realistic register programming in SoC hardware.
+
+    Configuration sequence:
+    1. Enable clock (CLK_CTRL_REG)
+    2. Set frequency (FREQ_REG)
+    3. Enable controller (CTRL_REG)
+    4. Read status registers to verify
+    """
+    try:
+        # Find components
+        arm_id = None
+        ddr_id = None
+
+        for comp_id, comp_sim in simulator.components.items():
+            if comp_sim.component.type == ComponentType.ARM:
+                arm_id = comp_id
+            elif comp_sim.component.type == ComponentType.DDR:
+                ddr_id = comp_id
+
+        if not arm_id or not ddr_id:
+            return {
+                "status": "error",
+                "message": "❌ Need at least one ARM and one DDR component"
+            }
+
+        # Check if connected
+        route = simulator.find_route(arm_id, ddr_id)
+        if not route:
+            return {
+                "status": "error",
+                "message": f"❌ No connection between {arm_id} and {ddr_id}. Connect them via NoC!"
+            }
+
+        # Get DDR component to access register map
+        ddr_simulator = simulator.components[ddr_id]
+        reg_map = ddr_simulator.register_map
+
+        # Configuration sequence
+        transactions = []
+
+        # Step 1: Enable clock (CLK_EN = 1)
+        clk_ctrl_value = 0x00000001  # Bit 0: CLK_EN
+        trans1 = await simulator.create_register_transaction(
+            source_id=arm_id,
+            dest_id=ddr_id,
+            reg_offset=reg_map.CLK_CTRL_REG,
+            value=clk_ctrl_value,
+            register_name="CLK_CTRL_REG"
+        )
+        transactions.append(trans1)
+
+        # Small delay between transactions
+        await asyncio.sleep(0.01)
+
+        # Step 2: Set frequency to 3200 MHz
+        freq_value = 3200  # MHz
+        trans2 = await simulator.create_register_transaction(
+            source_id=arm_id,
+            dest_id=ddr_id,
+            reg_offset=reg_map.FREQ_REG,
+            value=freq_value,
+            register_name="FREQ_REG"
+        )
+        transactions.append(trans2)
+
+        await asyncio.sleep(0.01)
+
+        # Step 3: Enable DDR controller (Enable bit = 1)
+        ctrl_value = 0x00000002  # Bit 1: Enable
+        trans3 = await simulator.create_register_transaction(
+            source_id=arm_id,
+            dest_id=ddr_id,
+            reg_offset=reg_map.CTRL_REG,
+            value=ctrl_value,
+            register_name="CTRL_REG"
+        )
+        transactions.append(trans3)
+
+        # Broadcast to all clients
+        await manager.broadcast({
+            "type": "ddr_config_started",
+            "payload": {
+                "route": route,
+                "num_transactions": len(transactions),
+                "configuration": {
+                    "clock_enabled": True,
+                    "frequency_mhz": freq_value,
+                    "controller_enabled": True
+                }
+            },
+        })
+
+        return {
+            "status": "success",
+            "message": f"✅ DDR configuration started: {len(transactions)} register writes via {' → '.join(route)}",
+            "transactions": [
+                {"register": "CLK_CTRL_REG", "value": f"0x{clk_ctrl_value:08X}"},
+                {"register": "FREQ_REG", "value": f"{freq_value} MHz"},
+                {"register": "CTRL_REG", "value": f"0x{ctrl_value:08X}"}
+            ]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # WebSocket Endpoint
 # ============================================================================
