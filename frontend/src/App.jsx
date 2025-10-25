@@ -273,6 +273,7 @@ function App() {
             nodesDraggable={true}
             nodesConnectable={true}
             elementsSelectable={true}
+            connectOnClick={true}
             fitView
             attributionPosition="bottom-left"
             defaultEdgeOptions={{

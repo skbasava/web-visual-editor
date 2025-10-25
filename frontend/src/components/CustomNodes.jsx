@@ -3,186 +3,112 @@
  * Defines visual representation of ARM, DDR, and NoC components.
  */
 
-import React, { memo } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { memo } from "react";
+import { Handle, Position } from "reactflow";
 
-/**
- * ARM CPU Node Component
- */
-export const ARMNode = memo(({ data, selected }) => {
-  return (
-    <div className={`px-6 py-4 rounded-lg shadow-lg border-2 min-w-[200px] ${
-      selected ? 'ring-2 ring-yellow-400' : ''
-    }`} style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      borderColor: '#764ba2',
-    }}>
-      {/* Handles for connections - each side can both send and receive */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="left-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="right-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
+export const ARMNode = memo(({ id, data, selected }) => (
+  <div
+    className={`px-6 py-4 rounded-lg min-w-[200px] ${
+      selected ? "border-2 border-yellow-400" : "border-2 border-white"
+    }`}
+    style={{
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      position: "relative",
+    }}
+  >
+    {["Top", "Bottom", "Left", "Right"].map((pos) => {
+      const cssPos = pos.toLowerCase();
 
-      <div className="flex items-center mb-2">
-        <div className="text-2xl mr-2">🔲</div>
-        <div>
-          <div className="font-bold text-white text-lg">{data.label}</div>
-          <div className="text-xs text-gray-200 opacity-80">ARM CPU</div>
-        </div>
+      const type = pos === "Top" || pos === "Bottom" ? "source" : "target";
+
+      return (
+        <Handle
+          key={pos}
+          type={type}
+          position={Position[pos]}
+          id={`${id}-${cssPos}-${type}`}
+          style={{
+            background: type === "source" ? "#4facfe" : "#f093fb",
+            width: 10,
+            height: 10,
+            zIndex: 20,
+          }}
+        />
+      );
+    })}
+
+    <div className="font-bold text-white text-lg">{data.label}</div>
+    <div className="text-xs text-gray-200 opacity-80">ARM CPU</div>
+    <div className="mt-3 space-y-1 text-xs text-white">
+      <div className="flex justify-between">
+        <span className="opacity-70">Cores:</span>
+        <span className="font-medium">{data.cores || 4}</span>
       </div>
-
-      <div className="mt-3 space-y-1 text-xs text-white">
-        <div className="flex justify-between">
-          <span className="opacity-70">Cores:</span>
-          <span className="font-medium">{data.cores || 4}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">Clock:</span>
-          <span className="font-medium">{data.clock_speed_mhz || 1000} MHz</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">ISA:</span>
-          <span className="font-medium">{data.instruction_set || 'ARMv8'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">Base:</span>
-          <span className="font-mono text-[10px]">{data.base_address || '0x00000000'}</span>
-        </div>
-        {data.state && (
-          <div className="flex justify-between pt-1 border-t border-white border-opacity-20">
-            <span className="opacity-70">State:</span>
-            <span className={`font-medium uppercase ${
-              data.state === 'active' ? 'text-green-300' : 'text-gray-300'
-            }`}>{data.state}</span>
-          </div>
-        )}
+      <div className="flex justify-between">
+        <span className="opacity-70">Clock:</span>
+        <span className="font-medium">{data.clock_speed_mhz || 1000} MHz</span>
       </div>
+      <div className="flex justify-between">
+        <span className="opacity-70">ISA:</span>
+        <span className="font-medium">{data.instruction_set || "ARMv8"}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="opacity-70">Base:</span>
+        <span className="font-mono text-[10px]">
+          {data.base_address || "0x00000000"}
+        </span>
+      </div>
+      {data.state && (
+        <div className="flex justify-between pt-1 border-t border-white border-opacity-20">
+          <span className="opacity-70">State:</span>
+          <span
+            className={`font-medium uppercase ${
+              data.state === "active" ? "text-green-300" : "text-gray-300"
+            }`}
+          >
+            {data.state}
+          </span>
+        </div>
+      )}
     </div>
-  );
-});
+  </div>
+));
 
-ARMNode.displayName = 'ARMNode';
+ARMNode.displayName = "ARMNode";
 
 /**
  * DDR Memory Node Component
  */
-export const DDRNode = memo(({ data, selected }) => {
+export const DDRNode = memo(({ id, data, selected }) => {
   return (
-    <div className={`px-6 py-4 rounded-lg shadow-lg border-2 min-w-[200px] ${
-      selected ? 'ring-2 ring-yellow-400' : ''
-    }`} style={{
-      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      borderColor: '#f5576c',
-    }}>
-      {/* Handles for connections - each side can both send and receive */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="left-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="right-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
+    <div
+      className={`px-6 py-4 rounded-lg min-w-[200px] ${
+        selected ? "border-2 border-yellow-400" : "border-2 ring-white"
+      }`}
+      style={{
+        background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      }}
+    >
+      {["Top", "Bottom", "Left", "Right"].map((pos) => {
+        const cssPos = pos.toLowerCase();
+
+        const type = pos === "Top" || pos === "Bottom" ? "source" : "target";
+
+        return (
+          <Handle
+            key={pos}
+            type={type}
+            position={Position[pos]}
+            id={`${id}-${cssPos}-${type}`}
+            style={{
+              background: type === "source" ? "#4facfe" : "#f093fb",
+              width: 10,
+              height: 10,
+              zIndex: 20,
+            }}
+          />
+        );
+      })}
 
       <div className="flex items-center mb-2">
         <div className="text-2xl mr-2">💾</div>
@@ -207,15 +133,24 @@ export const DDRNode = memo(({ data, selected }) => {
         </div>
         <div className="flex justify-between">
           <span className="opacity-70">Base:</span>
-          <span className="font-mono text-[10px]">{data.base_address || '0x80000000'}</span>
+          <span className="font-mono text-[10px]">
+            {data.base_address || "0x80000000"}
+          </span>
         </div>
         {data.state && (
           <div className="flex justify-between pt-1 border-t border-white border-opacity-20">
             <span className="opacity-70">State:</span>
-            <span className={`font-medium uppercase ${
-              data.state === 'busy' ? 'text-yellow-300' :
-              data.state === 'active' ? 'text-green-300' : 'text-gray-300'
-            }`}>{data.state}</span>
+            <span
+              className={`font-medium uppercase ${
+                data.state === "busy"
+                  ? "text-yellow-300"
+                  : data.state === "active"
+                  ? "text-green-300"
+                  : "text-gray-300"
+              }`}
+            >
+              {data.state}
+            </span>
           </div>
         )}
       </div>
@@ -223,116 +158,104 @@ export const DDRNode = memo(({ data, selected }) => {
   );
 });
 
-DDRNode.displayName = 'DDRNode';
+DDRNode.displayName = "DDRNode";
 
 /**
  * NoC (Network-on-Chip) Node Component
  */
-export const NoCNode = memo(({ data, selected }) => {
+export const NoCNode = memo(({ id, data, selected }) => {
   return (
-    <div className={`px-6 py-4 rounded-lg shadow-lg border-2 min-w-[200px] ${
-      selected ? 'ring-2 ring-yellow-400' : ''
-    }`} style={{
-      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      borderColor: '#00f2fe',
-    }}>
-      {/* Handles for connections - each side can both send and receive */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="left-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right-source"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="right-target"
-        className="w-3 h-3"
-        isConnectable={true}
-      />
+    <div className="relative">
+      <div className="absolute inset-0 z-10">
+        {["Top", "Bottom", "Left", "Right"].map((pos) => {
+          const cssPos = pos.toLowerCase();
 
-      <div className="flex items-center mb-2">
-        <div className="text-2xl mr-2">🔀</div>
-        <div>
-          <div className="font-bold text-white text-lg">{data.label}</div>
-          <div className="text-xs text-gray-200 opacity-80">Network-on-Chip</div>
-        </div>
+          const type = pos === "Top" || pos === "Bottom" ? "source" : "target";
+
+          return (
+            <Handle
+              key={pos}
+              type={type}
+              position={Position[pos]}
+              id={`${id}-${cssPos}-${type}`}
+              style={{
+                background: type === "source" ? "#4facfe" : "#f093fb",
+                width: 10,
+                height: 10,
+                zIndex: 20,
+              }}
+            />
+          );
+        })}
       </div>
-
-      <div className="mt-3 space-y-1 text-xs text-white">
-        <div className="flex justify-between">
-          <span className="opacity-70">Bandwidth:</span>
-          <span className="font-medium">{data.bandwidth_gbps || 100} Gbps</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">Latency:</span>
-          <span className="font-medium">{data.latency_ns || 10} ns</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">Topology:</span>
-          <span className="font-medium">{data.topology || 'mesh'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="opacity-70">Routing:</span>
-          <span className="font-medium text-[10px]">{data.routing_algorithm || 'xy-routing'}</span>
-        </div>
-        {data.state && (
-          <div className="flex justify-between pt-1 border-t border-white border-opacity-20">
-            <span className="opacity-70">State:</span>
-            <span className={`font-medium uppercase ${
-              data.state === 'active' ? 'text-green-300' : 'text-gray-300'
-            }`}>{data.state}</span>
+      <div
+        style={{
+          background: selected ? "#facc15" : "#ffffff",
+          padding: selected ? "2px" : "2px",
+          clipPath:
+            "polygon(0% 50%, 10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%)",
+          display: "inline-block",
+        }}
+      >
+        <div
+          className="px-6 py-4 min-w-[220px] text-white"
+          style={{
+            background: "#4facfe",
+            clipPath:
+              "polygon(0% 50%, 10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%)",
+          }}
+        >
+          <div className="flex items-center justify-center mb-2 text-center">
+            <div className="text-2xl mr-2">🔀</div>
+            <div>
+              <div className="font-bold text-white text-lg">{data.label}</div>
+              <div className="text-xs text-gray-200 opacity-80">
+                Network-on-Chip
+              </div>
+            </div>
           </div>
-        )}
+
+          <div className="mt-3 space-y-1 text-xs text-white">
+            <div className="flex justify-between">
+              <span className="opacity-70">Bandwidth:</span>
+              <span className="font-medium">
+                {data.bandwidth_gbps || 100} Gbps
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-70">Latency:</span>
+              <span className="font-medium">{data.latency_ns || 10} ns</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-70">Topology:</span>
+              <span className="font-medium">{data.topology || "mesh"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-70">Routing:</span>
+              <span className="font-medium text-[10px]">
+                {data.routing_algorithm || "xy-routing"}
+              </span>
+            </div>
+            {data.state && (
+              <div className="flex justify-between pt-1 border-t border-white border-opacity-20">
+                <span className="opacity-70">State:</span>
+                <span
+                  className={`font-medium uppercase ${
+                    data.state === "active" ? "text-green-300" : "text-gray-300"
+                  }`}
+                >
+                  {data.state}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 });
 
-NoCNode.displayName = 'NoCNode';
+NoCNode.displayName = "NoCNode";
 
 /**
  * Node types mapping for React Flow

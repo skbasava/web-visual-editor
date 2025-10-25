@@ -47,24 +47,17 @@ code {
 .react-flow__node {
   border-radius: 8px;
   font-size: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .react-flow__node-arm {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: 2px solid #764ba2;
   color: white;
 }
 
 .react-flow__node-ddr {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  border: 2px solid #f5576c;
   color: white;
 }
 
 .react-flow__node-noc {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  border: 2px solid #00f2fe;
   color: white;
 }
 
